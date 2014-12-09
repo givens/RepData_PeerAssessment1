@@ -5,21 +5,182 @@ output:
     keep_md: true
 ---
 
+This is a R Markdown document for Programming Assignment 1 of the Reproducible Research class.
 
 ## Loading and preprocessing the data
 
+```{r load-data}
+# Load data
+data <- read.csv("activity.csv")
+```
 
+```{r transform-data}
+# Process or transform the data for analysis
+library(dplyr,warn.conflicts=F)
+d <- group_by(data,date) %>%
+    summarize(day.tot=sum(steps,na.rm=T)) 
+# total steps per day
+t <- group_by(data,interval) %>%
+    summarize(int.avg=mean(steps,na.rm=T)) 
+# average steps per interval
+```
 
 ## What is mean total number of steps taken per day?
 
+```{r histogram}
+# Make a HISTOGRAM of total steps per day
+# Ignore NA
+hist(d$day.tot,
+     breaks="Scott",
+     xlab="Steps per Day",
+     main="Histogram of Steps per Day",
+     xlim=c(0,25000),
+     ylim=c(0,40))
+```
 
+```{r mean-median}
+# Calculate the mean and median total steps per day
+# Ignore NA
+avg <- mean(d$day.tot)
+med <- median(d$day.tot)
+```
+
+The average is `r avg`.  The median is `r med`.
 
 ## What is the average daily activity pattern?
 
+```{r time-series-plot}
+# Plot activity pattern
+par(mfrow=c(1,1))
+plot(t$interval,t$int.avg,
+     type="l",
+     xlab="Interval",
+     ylab="Average Steps",
+     main="Plot of Daily Activity Pattern")
+```
 
+```{r find-max}
+# Find interval with maximum steps
+idx <- which.max(t$int.avg)
+t.max <- t$interval[idx]
+```
+
+The interval with maximum steps is `r t.max`.
 
 ## Imputing missing values
 
+```{r missing-values}
+# Count number of missing values
+idx <- is.na(data$steps)
+count <- sum(idx)
+```
 
+The number of missing values is `r count`.
+
+```{r devise-strategy}
+# Use mean of the 5-minute interval to impute
+# Create impute function
+impute <- function(x) {
+    m <- mean(x$steps,na.rm=T)
+    bad <- is.na(x$steps)
+    x$steps[bad] <- m
+    x
+}
+```
+
+```{r new-dataset}
+# change interval into factor
+d <- mutate(data,interval=factor(interval))
+# split
+f <- split(d,d$interval)
+# impute
+f <- lapply(f,impute)
+# unsplit
+f <- unsplit(f,d$interval)
+```
+
+```{r make-another-hist}
+g <- group_by(f,date) %>%
+    summarize(day.tot=sum(steps)) 
+# total steps per day
+# Make a HISTOGRAM of total steps per day
+# Ignore NA
+hist(g$day.tot,
+     breaks="Scott",
+     xlab="Steps per Day",
+     main="Histogram of Steps per Day with Imputed Data",
+     xlim=c(0,25000),
+     ylim=c(0,40))
+```
+
+```{r display-g}
+head(g,20)
+```
+
+```{r make-another-mean-median}
+# Calculate the mean and median total steps per day
+# Ignore NA
+g.avg <- mean(g$day.tot)
+g.med <- median(g$day.tot)
+```
+
+The imputed data has an average being `r g.avg`.  The median is `r g.med`.  Why the hell are they the same?
+
+This new histogram is different than the original histogram.  Imputing the missing data changes the daily totals.  The original histogram is skewed left, with zero days.  The new one has more data points near the mean.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r create-factor-varible}
+# Create weekday/weekend factor variable
+days <- weekdays(as.Date(data$date))
+wdays <- rep("",length(days))
+for (k in seq_along(days)) {
+    if (days[k]=="Saturday" | days[k] == "Sunday") {
+        wdays[k] <- "weekend"
+    }
+    else {
+        wdays[k] <- "weekday"
+    }
+}
+wdays <- factor(wdays)
+
+```{r reduce}
+# Reduce data
+f$wdays <- wdays
+tt <- group_by(f,wdays,interval) %>%
+    summarize(int.avg=mean(steps)) %>%
+    ungroup()
+```
+
+```{r how-did-this change}
+tt$interval=as.numeric(levels(tt$interval))[tt$interval]
+```
+```{r compute}
+# Show the data
+head(tt,15)
+tail(tt,15)
+
+# Dimensions
+dim(tt)
+
+# Look at intervals
+tt$interval
+
+# class of interval
+class(tt$interval)
+```
+
+
+```{r lattice}
+# Plot the data
+library(lattice)
+xyplot(int.avg ~ interval | wdays, data=tt,
+       type="l",
+       xlab="Interval",
+       ylab="Number of steps",
+       layout=c(1,2),
+       scales=list(
+           y=list(tick.number=5),
+           x=list(at=c(0,500,1000,1500,2000))))
+```
+
