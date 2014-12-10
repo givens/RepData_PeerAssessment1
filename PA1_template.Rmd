@@ -5,7 +5,7 @@ output:
     keep_md: true
 ---
 
-This is a R Markdown document for Programming Assignment 1 of the Reproducible Research class.
+This is a R Markdown document for Programming Assignment 1 of the Reproducible Research class.  It is written by B. Givens.
 
 ## Loading and preprocessing the data
 
@@ -30,33 +30,31 @@ t <- group_by(data,interval) %>%
 ```{r histogram}
 # Make a HISTOGRAM of total steps per day
 # Ignore NA
+par(mfrow=c(1,1))
 hist(d$day.tot,
-     breaks="Scott",
+     breaks=20,
      xlab="Steps per Day",
      main="Histogram of Steps per Day",
      xlim=c(0,25000),
-     ylim=c(0,40))
+     ylim=c(0,20))
 ```
 
 ```{r mean-median}
 # Calculate the mean and median total steps per day
 # Ignore NA
-avg <- mean(d$day.tot)
-med <- median(d$day.tot)
+d.avg <- mean(d$day.tot)
+d.med <- median(d$day.tot)
 ```
 
-The average is `r avg`.  The median is `r med`.
+The step average is `r d.avg`.  The median is `r d.med`.
 
 ## What is the average daily activity pattern?
 
 ```{r time-series-plot}
-# Plot activity pattern
-par(mfrow=c(1,1))
-plot(t$interval,t$int.avg,
-     type="l",
-     xlab="Interval",
-     ylab="Average Steps",
-     main="Plot of Daily Activity Pattern")
+with(t,plot(interval,int.avg,type="l",
+            xlab="Interval",
+            ylab="Average Steps",
+            main="Daily Activity Pattern"))
 ```
 
 ```{r find-max}
@@ -75,28 +73,29 @@ idx <- is.na(data$steps)
 count <- sum(idx)
 ```
 
-The number of missing values is `r count`.
+The number of NA values is `r count`, which is all intervals for 8 different days.  
 
 ```{r devise-strategy}
-# Use mean of the 5-minute interval to impute
 # Create impute function
+# This function will impute the average across dates or intervals
 impute <- function(x) {
-    m <- mean(x$steps,na.rm=T)
-    bad <- is.na(x$steps)
-    x$steps[bad] <- m
+    m <- mean(x,na.rm=T)
+    if (is.na(m)) {m=0.0}
+    bad <- is.na(x)
+    x[bad] <- m
     x
 }
 ```
 
 ```{r new-dataset}
-# change interval into factor
-d <- mutate(data,interval=factor(interval))
-# split
-f <- split(d,d$interval)
-# impute
-f <- lapply(f,impute)
+# Impute NA data across dates
+f <- data
+dates <- factor(f$date)
+temp <- split(f$steps,dates)
+# impute across dates
+temp <- lapply(temp,impute)
 # unsplit
-f <- unsplit(f,d$interval)
+f$steps <- unsplit(temp,dates)
 ```
 
 ```{r make-another-hist}
@@ -104,17 +103,12 @@ g <- group_by(f,date) %>%
     summarize(day.tot=sum(steps)) 
 # total steps per day
 # Make a HISTOGRAM of total steps per day
-# Ignore NA
 hist(g$day.tot,
-     breaks="Scott",
+     breaks=20,
      xlab="Steps per Day",
      main="Histogram of Steps per Day with Imputed Data",
      xlim=c(0,25000),
-     ylim=c(0,40))
-```
-
-```{r display-g}
-head(g,20)
+     ylim=c(0,20))
 ```
 
 ```{r make-another-mean-median}
@@ -124,9 +118,9 @@ g.avg <- mean(g$day.tot)
 g.med <- median(g$day.tot)
 ```
 
-The imputed data has an average being `r g.avg`.  The median is `r g.med`.  Why the hell are they the same?
+The imputed step average is `r g.avg`.  The median is `r g.med`.  
 
-This new histogram is different than the original histogram.  Imputing the missing data changes the daily totals.  The original histogram is skewed left, with zero days.  The new one has more data points near the mean.
+As expected, the histogram, average, and median are same.  Each of 8 days have NAs for all intervals. These NA values are imputed.  The imputed values are zero.  The raw values were assumed zero.  So you get the same thing.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -143,38 +137,20 @@ for (k in seq_along(days)) {
     }
 }
 wdays <- factor(wdays)
+```
 
 ```{r reduce}
 # Reduce data
 f$wdays <- wdays
-tt <- group_by(f,wdays,interval) %>%
+f <- group_by(f,wdays,interval) %>%
     summarize(int.avg=mean(steps)) %>%
     ungroup()
 ```
 
-```{r how-did-this change}
-tt$interval=as.numeric(levels(tt$interval))[tt$interval]
-```
-```{r compute}
-# Show the data
-head(tt,15)
-tail(tt,15)
-
-# Dimensions
-dim(tt)
-
-# Look at intervals
-tt$interval
-
-# class of interval
-class(tt$interval)
-```
-
-
 ```{r lattice}
 # Plot the data
 library(lattice)
-xyplot(int.avg ~ interval | wdays, data=tt,
+xyplot(int.avg ~ interval | wdays, data=f,
        type="l",
        xlab="Interval",
        ylab="Number of steps",
@@ -184,3 +160,4 @@ xyplot(int.avg ~ interval | wdays, data=tt,
            x=list(at=c(0,500,1000,1500,2000))))
 ```
 
+The activity patterns are different.
