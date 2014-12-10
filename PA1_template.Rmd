@@ -28,7 +28,7 @@ t <- group_by(data,interval) %>%
 
 ## What is mean total number of steps taken per day?
 
-```{r histogram}
+```{r histogram, fig.height=3,fig.width=5}
 # Make a HISTOGRAM of total steps per day
 par(mfrow=c(1,1))
 hist(d$day.tot,
@@ -36,7 +36,8 @@ hist(d$day.tot,
      xlab="Steps per Day",
      main="Histogram of Steps per Day",
      xlim=c(0,25000),
-     ylim=c(0,20))
+     ylim=c(0,20),
+     col="red")
 ```
 
 ```{r mean-median}
@@ -50,11 +51,13 @@ The step average is `r d.avg`.  The median is `r d.med`.
 
 ## What is the average daily activity pattern?
 
-```{r time-series-plot}
+```{r time-series-plot,,fig.height=3,fig.width=5}
 with(t,plot(interval,int.avg,type="l",
             xlab="Interval",
             ylab="Average Steps",
-            main="Daily Activity Pattern"))
+            main="Daily Activity Pattern",
+            col="green",
+            lwd=3))
 ```
 
 ```{r find-max}
@@ -96,7 +99,7 @@ temp <- lapply(temp,impute)
 f$steps <- unsplit(temp,dates)
 ```
 
-```{r make-another-hist}
+```{r make-another-hist, fig.height=3,fig.width=5}
 # Histogram with imputed data
 g <- group_by(f,date) %>%
     summarize(day.tot=sum(steps)) 
@@ -105,9 +108,10 @@ g <- group_by(f,date) %>%
 hist(g$day.tot,
      breaks=20,
      xlab="Steps per Day",
-     main="Histogram of Steps per Day with Imputed Data",
+     main="Histogram of Steps per Day, with Imputed Data",
      xlim=c(0,25000),
-     ylim=c(0,20))
+     ylim=c(0,20),
+     col="blue")
 ```
 
 ```{r make-another-mean-median}
