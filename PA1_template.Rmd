@@ -16,6 +16,7 @@ data <- read.csv("activity.csv")
 
 ```{r transform-data}
 # Process or transform the data for analysis
+# Ignore NA
 library(dplyr,warn.conflicts=F)
 d <- group_by(data,date) %>%
     summarize(day.tot=sum(steps,na.rm=T)) 
@@ -29,7 +30,6 @@ t <- group_by(data,interval) %>%
 
 ```{r histogram}
 # Make a HISTOGRAM of total steps per day
-# Ignore NA
 par(mfrow=c(1,1))
 hist(d$day.tot,
      breaks=20,
@@ -77,7 +77,7 @@ The number of NA values is `r count`, which is all intervals for 8 different day
 
 ```{r devise-strategy}
 # Create impute function
-# This function will impute the average across dates or intervals
+# This function will impute the average across dates, or intervals
 impute <- function(x) {
     m <- mean(x,na.rm=T)
     if (is.na(m)) {m=0.0}
@@ -92,13 +92,12 @@ impute <- function(x) {
 f <- data
 dates <- factor(f$date)
 temp <- split(f$steps,dates)
-# impute across dates
 temp <- lapply(temp,impute)
-# unsplit
 f$steps <- unsplit(temp,dates)
 ```
 
 ```{r make-another-hist}
+# Histogram with imputed data
 g <- group_by(f,date) %>%
     summarize(day.tot=sum(steps)) 
 # total steps per day
