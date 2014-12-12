@@ -28,16 +28,17 @@ t <- group_by(data,interval) %>%
 
 ## What is mean total number of steps taken per day?
 
-```{r histogram, fig.height=3,fig.width=5}
+```{r histogram, fig.height=4,fig.width=5}
 # Make a HISTOGRAM of total steps per day
 par(mfrow=c(1,1))
 hist(d$day.tot,
-     breaks=20,
+     breaks=26,
      xlab="Steps per Day",
      main="Histogram of Steps per Day",
      xlim=c(0,25000),
      ylim=c(0,20),
      col="red")
+rug(d$day.tot)
 ```
 
 ```{r mean-median}
@@ -99,19 +100,20 @@ temp <- lapply(temp,impute)
 f$steps <- unsplit(temp,dates)
 ```
 
-```{r make-another-hist, fig.height=3,fig.width=5}
+```{r make-another-hist, fig.height=4,fig.width=5}
 # Histogram with imputed data
 g <- group_by(f,date) %>%
     summarize(day.tot=sum(steps)) 
 # total steps per day
 # Make a HISTOGRAM of total steps per day
 hist(g$day.tot,
-     breaks=20,
+     breaks=26,
      xlab="Steps per Day",
      main="Histogram of Steps per Day, with Imputed Data",
      xlim=c(0,25000),
      ylim=c(0,20),
      col="blue")
+rug(g$day.tot)
 ```
 
 ```{r make-another-mean-median}
