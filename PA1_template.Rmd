@@ -1,8 +1,7 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+output: html_document:
+keep_md: true
 ---
 
 This is a R Markdown document for Programming Assignment 1 of the Reproducible Research class.
