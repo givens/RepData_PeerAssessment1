@@ -1,6 +1,6 @@
 # Reproducible Research: Peer Assessment 1
 
-This is a R Markdown document for Programming Assignment 1 of the Reproducible Research class.  It is written by B. Givens.
+This is a R Markdown document for Programming Assignment 1 of the Reproducible Research class.
 
 ## Loading and preprocessing the data
 
@@ -47,9 +47,11 @@ rug(d$day.tot)
 # Ignore NA
 d.avg <- mean(d$day.tot)
 d.med <- median(d$day.tot)
+d.avg <- as.integer(d.avg) # for display
+d.med <- as.integer(d.med)
 ```
 
-The step average is 9354.2295082.  The median is 10395.
+The step average is 9354.  The median is 10395.
 
 ## What is the average daily activity pattern?
 
@@ -83,7 +85,9 @@ idx <- is.na(data$steps)
 count <- sum(idx)
 ```
 
-The number of NA values is 2304, which is all intervals for 8 different days.  
+The number of NA values is 2304, which is all intervals for eight different days. 
+
+**Strategy**:  Impute across intervals using `impute` function.
 
 
 ```r
@@ -91,7 +95,7 @@ The number of NA values is 2304, which is all intervals for 8 different days.
 # This function will impute the average across dates, or intervals
 impute <- function(x) {
     m <- mean(x,na.rm=T)
-    if (is.na(m)) {m=0.0}
+    if (is.na(m)) {m=0.0} 
     bad <- is.na(x)
     x[bad] <- m
     x
@@ -102,10 +106,13 @@ impute <- function(x) {
 ```r
 # Impute NA data across dates
 f <- data
-dates <- factor(f$date)
-temp <- split(f$steps,dates)
+# dates <- factor(f$date)
+# temp <- split(f$steps,dates)
+intervals <- factor(f$interval)
+temp <- split(f$steps,intervals)
 temp <- lapply(temp,impute)
-f$steps <- unsplit(temp,dates)
+# f$steps <- unsplit(temp,dates)
+f$steps <- unsplit(temp,intervals)
 ```
 
 
@@ -127,17 +134,19 @@ rug(g$day.tot)
 
 ![](./PA1_template_files/figure-html/make-another-hist-1.png) 
 
+The histogram shifted eight counts from the 0 bin to the average bin.
+
 
 ```r
 # Calculate the mean and median total steps per day
 # Ignore NA
 g.avg <- mean(g$day.tot)
 g.med <- median(g$day.tot)
+g.avg <- as.integer(g.avg) # for display
+g.med <- as.integer(g.med)
 ```
 
-The imputed step average is 9354.2295082.  The median is 1.0395\times 10^{4}.  
-
-As expected, the histogram, average, and median are same.  Each of 8 days have NAs for all intervals. These NA values are imputed.  The imputed values are zero.  The raw values were assumed zero.  So you get the same thing.
+The imputed mean is 10766.  The mean equals the mode and the median.  It is the mode because the mean occurs eight times.  The multiplicity includes the 50% percentile, which makes it the median.  The imputed median is 10766. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
